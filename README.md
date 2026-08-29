@@ -105,6 +105,28 @@ Variables disponibles:
 | `WHATSAPP_BRIDGE_URL` | Endpoint /send del bridge | `http://localhost:3000/send` |
 | `HORA_INICIO` | Inicio de la ventana proactiva | `9` |
 | `HORA_FIN` | Fin de la ventana proactiva | `21` |
+| `ALLOWED_TELEGRAM_IDS` | IDs de Telegram autorizados (vacío = todos) | — (recomendado) |
+| `ALLOWED_WHATSAPP_NUMBERS` | Números de WhatsApp autorizados (vacío = todos) | — (recomendado) |
+
+## Cómo conectar tus cuentas
+
+El espejo no tiene usuarios predefinidos: te registrás automáticamente la primera vez que le escribís. A partir de ese momento ya puede responderte y enviarte mensajes proactivos. Pero primero hay que crear las cuentas del lado de cada plataforma.
+
+### Telegram (obligatorio para el núcleo)
+
+1. **Crear el bot:** en Telegram, hablale a [@BotFather](https://t.me/BotFather), enviá `/newbot` y seguí los pasos (nombre y username). BotFather te da un **token**.
+2. **Configurar el token:** pegalo en `.env` como `TELEGRAM_TOKEN=...`.
+3. **Restringir el acceso (recomendado):** hablale a [@userinfobot](https://t.me/userinfobot) para conocer tu ID numérico y ponelo en `.env` como `ALLOWED_TELEGRAM_IDS=123456789`. Sin esto, cualquier persona que encuentre el bot por su username podría hablarle y ensuciar la memoria.
+4. **Escribirle:** arrancá el núcleo (`./start.sh`), buscá tu bot en Telegram por su username y enviale cualquier mensaje. Quedás registrado y el espejo ya te puede escribir a vos.
+
+Nota: el bot de Telegram **no puede iniciar conversaciones** con usuarios que nunca le escribieron (limitación de la plataforma). Por eso el primer mensaje siempre lo tenés que enviar vos.
+
+### WhatsApp (opcional, vía bridge no oficial)
+
+1. **El bridge usa un número propio:** al escanear el QR, el bridge inicia sesión con el número de ese celular. Recomendación fuerte: usá un **número secundario** dedicado al espejo (un chip prepago alcanza), no tu número personal. Meta puede banear números por uso no oficial; el riesgo es bajo en uso personal pero existe.
+2. **Vincular:** `cd whatsapp-bridge && node index.js`, escaneá el QR con WhatsApp > Dispositivos vinculados.
+3. **Cómo te escribe:** le hablás **al número del bridge** desde tu WhatsApp personal, como a cualquier contacto. El espejo te responde desde ese número.
+4. **Restringir el acceso:** poné tu número personal en `.env` como `ALLOWED_WHATSAPP_NUMBERS=59899123456@c.us` (código de país + número, sin `+`). Así, si otra persona escribe al número del bridge, el espejo la ignora.
 
 ## Arranque
 

@@ -23,10 +23,28 @@ logger = logging.getLogger(__name__)
 app = FastAPI(title="Espejo Agudo")
 
 
+def _telegram_permitido(telegram_user_id: int) -> bool:
+    """True si el ID de Telegram está autorizado (o no hay whitelist)."""
+    if not config.ALLOWED_TELEGRAM_IDS:
+        return True
+    return str(telegram_user_id) in config.ALLOWED_TELEGRAM_IDS
+
+
+def _whatsapp_permitido(remitente: str) -> bool:
+    """True si el número de WhatsApp está autorizado (o no hay whitelist)."""
+    if not config.ALLOWED_WHATSAPP_NUMBERS:
+        return True
+    return remitente in config.ALLOWED_WHATSAPP_NUMBERS
+
+
 async def tg_text_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Mensaje de texto de Telegram -> process_message()."""
     # Importación diferida para evitar dependencia circular con main.
     from .main import process_message
+
+    if not _telegram_permitido(update.effective_user.id):
+        logger.warning("Telegram no autorizado: %s", update.effective_user.id)
+        return
 
     user_id = f"tg_{update.effective_user.id}"
     chat_id = update.effective_chat.id
@@ -42,6 +60,10 @@ async def tg_text_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
 async def tg_voice_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Nota de voz de Telegram: descargar .ogg, transcribir, borrar, procesar."""
     from .main import process_message
+
+    if not _telegram_permitido(update.effective_user.id):
+        logger.warning("Telegram no autorizado (voz): %s", update.effective_user.id)
+        return
 
     user_id = f"tg_{update.effective_user.id}"
     chat_id = update.effective_chat.id
@@ -83,6 +105,9 @@ async def whatsapp_webhook(request: Request) -> dict:
         body = data.get("body", "")
         if not remitente or not body:
             return {"status": "ignored"}
+        if not _whatsapp_permitido(remitente):
+            logger.warning("WhatsApp no autorizado: %s", remitente)
+            return {"status": "ignored"}
         user_id = f"wa_{remitente}"
         respuesta = await process_message(user_id, body, "whatsapp", remitente)
         # Si hay respuesta no-SILENCIO, enviarla al bridge de WhatsApp.
@@ -109,6 +134,9 @@ async def whatsapp_voice_webhook(request: Request) -> dict:
         remitente = data.get("from", "")
         audio_b64 = data.get("data", "")
         if not remitente or not audio_b64:
+            return {"status": "ignored"}
+        if not _whatsapp_permitido(remitente):
+            logger.warning("WhatsApp no autorizado (voz): %s", remitente)
             return {"status": "ignored"}
         user_id = f"wa_{remitente}"
         audio_bytes = base64.b64decode(audio_b64)

@@ -37,3 +37,23 @@ WHATSAPP_BRIDGE_URL = os.getenv("WHATSAPP_BRIDGE_URL", "http://localhost:3000/se
 # Ventana horaria diaria para mensajes proactivos (de 9 a 21 por defecto).
 HORA_INICIO = int(os.getenv("HORA_INICIO", "9"))
 HORA_FIN = int(os.getenv("HORA_FIN", "21"))
+
+
+def _parse_lista(valor: str) -> list:
+    """Parsea una lista separada por comas desde .env, ignorando vacíos."""
+    return [item.strip() for item in valor.split(",") if item.strip()]
+
+
+# Control de acceso: quién puede hablarle al espejo.
+# Si la lista está vacía, el bot acepta mensajes de cualquiera (no recomendado
+# salvo para pruebas). Configurar siempre en producción.
+#
+# ALLOWED_TELEGRAM_IDS: IDs numéricos de Telegram separados por comas.
+#   Tu ID lo obtenés hablándole a @userinfobot en Telegram.
+#   Ejemplo: ALLOWED_TELEGRAM_IDS=123456789
+#
+# ALLOWED_WHATSAPP_NUMBERS: números con formato WhatsApp separados por comas.
+#   Formato: codigo_pais + numero + "@c.us" (sin "+", sin espacios).
+#   Ejemplo: ALLOWED_WHATSAPP_NUMBERS=59899123456@c.us
+ALLOWED_TELEGRAM_IDS = _parse_lista(os.getenv("ALLOWED_TELEGRAM_IDS", ""))
+ALLOWED_WHATSAPP_NUMBERS = _parse_lista(os.getenv("ALLOWED_WHATSAPP_NUMBERS", ""))
