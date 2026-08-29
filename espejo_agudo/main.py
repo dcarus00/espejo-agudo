@@ -12,7 +12,7 @@ import os
 import uvicorn
 from telegram.ext import Application, MessageHandler, filters
 
-from . import config, handlers, llm, memory, scheduler
+from . import config, handlers, llm, memory, scheduler, state
 
 logging.basicConfig(
     level=logging.INFO,
@@ -43,15 +43,69 @@ def cargar_system_prompt() -> str:
 
 SYSTEM_PROMPT = cargar_system_prompt()
 
+# Prompt de onboarding: primera conversación con un usuario nuevo.
+# El espejo entrevista al usuario para sentar la base de conocimiento
+# (proyectos, compromisos, contexto) antes de operar en modo normal.
+# Cuando tiene suficiente información, cierra con la marca PERFIL_COMPLETO.
+ONBOARDING_PROMPT = """Sos un segundo cerebro, no un amigo. No tenés emociones.
+No usás emojis. No fingís empatía.
+
+Esta es la PRIMERA conversación con este usuario. Tu tarea es entrevistarlo
+para conocer su contexto: en qué trabaja o qué busca, qué proyectos tiene
+en curso, qué compromisos o plazos maneja, y qué patrones quiere que le
+señales. Necesitás esa información para serle útil después.
+
+Reglas de la entrevista:
+- Hacé UNA o DOS preguntas por mensaje, no un cuestionario entero.
+- Preguntas directas y concretas. Nada de "contame de vos".
+- Cuando el usuario responda, procesá y seguí con lo siguiente importante.
+- Cuando ya tengas un panorama claro (proyectos, compromisos, qué quiere
+  que le señales), cerrá la entrevista con un resumen breve de lo que
+  entendiste y, en la ÚLTIMA LÍNEA del mensaje, escribí exactamente:
+  PERFIL_COMPLETO"""
+
+MARCADOR_PERFIL = "PERFIL_COMPLETO"
+
+
+async def _procesar_onboarding(user_id: str, text: str, memoria_relevante: str) -> str:
+    """Maneja la entrevista inicial con un usuario nuevo.
+
+    Devuelve la respuesta a enviar. Si el LLM cierra la entrevista con
+    PERFIL_COMPLETO, marca al usuario como onboarded y guarda un resumen
+    del perfil en la memoria vectorial.
+    """
+    prompt = (
+        f"MEMORIA DE LA CONVERSACIÓN:\n{memoria_relevante or '(primera interacción)'}\n\n"
+        f"MENSAJE DEL USUARIO:\n{text}\n\n"
+        "Continuá la entrevista (1-2 preguntas) o cerrala con el resumen "
+        "y la marca PERFIL_COMPLETO si ya tenés el panorama."
+    )
+    respuesta = await asyncio.to_thread(llm.ask_ollama, ONBOARDING_PROMPT, prompt)
+
+    if respuesta and MARCADOR_PERFIL in respuesta:
+        state.marcar_onboarded(user_id)
+        # Guardar el resumen del perfil como memoria semilla.
+        resumen = respuesta.replace(MARCADOR_PERFIL, "").strip()
+        await asyncio.to_thread(
+            memory.save_memory,
+            user_id,
+            f"PERFIL DEL USUARIO (entrevista inicial): {resumen}",
+            "assistant",
+        )
+        # Volver a pedir al LLM el cierre limpio, sin la marca técnica.
+        return resumen
+    return respuesta
+
 
 async def process_message(
     user_id: str, text: str, platform: str, raw_chat_id
 ) -> str | None:
-    """Flujo central de 6 pasos para cada mensaje entrante.
+    """Flujo central para cada mensaje entrante.
 
     1. Registrar el usuario. 2. Guardar el mensaje en memoria.
     3. Extraer compromisos y programar recordatorios.
-    4. Recuperar memoria relevante. 5. Consultar al LLM con contexto.
+    4. Recuperar memoria relevante. 5. Consultar al LLM con contexto
+       (onboarding si es usuario nuevo, modo espejo si ya está registrado).
     6. Guardar y retornar la respuesta (o None si es SILENCIO).
     """
     # 1. Registrar usuario (y su plataforma/chat para mensajes salientes).
@@ -77,7 +131,16 @@ async def process_message(
         memory.get_relevant_memories, user_id, text
     )
 
-    # 5. Construir el prompt con SYSTEM_PROMPT + memoria + mensaje.
+    # 5a. Usuario nuevo: entrevista de onboarding (nunca devuelve SILENCIO).
+    if not state.esta_onboarded(user_id):
+        respuesta = await _procesar_onboarding(user_id, text, memoria_relevante)
+        if respuesta:
+            await asyncio.to_thread(
+                memory.save_memory, user_id, respuesta, "assistant"
+            )
+        return respuesta
+
+    # 5b. Usuario registrado: modo espejo normal.
     prompt = (
         f"MEMORIA RELEVANTE:\n{memoria_relevante or '(sin memoria relevante)'}\n\n"
         f"MENSAJE DEL USUARIO:\n{text}\n\n"

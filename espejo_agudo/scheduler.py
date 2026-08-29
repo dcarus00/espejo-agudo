@@ -84,6 +84,13 @@ def _programar_siguiente_aleatorio(user_id: str) -> None:
 
 async def _enviar_proactivo(user_id: str) -> None:
     """Revisar memoria y escribir al usuario SOLO si hay algo útil que decir."""
+    from . import state
+
+    # Sin onboarding completado no hay contexto para ser proactivo.
+    if not state.esta_onboarded(user_id):
+        logger.info("Proactivo omitido para %s: onboarding pendiente", user_id)
+        _programar_siguiente_aleatorio(user_id)
+        return
     try:
         memoria_reciente = memory.get_relevant_memories(
             user_id, _QUERY_PROACTIVO

@@ -10,6 +10,7 @@ system_prompt.md
 # Datos y sesiones
 qdrant_storage/
 session/
+data/
 *.ogg
 *.log
 

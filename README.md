@@ -23,12 +23,13 @@ Corre enteramente en tu máquina (Debian/Linux): el razonamiento, la memoria y l
 ## Características distintivas
 
 1. **No es un amigo, es un segundo cerebro.** Sin saludos, sin emojis, sin adulación. Responde con la verdad incómoda cuando hace falta.
-2. **Memoria semántica persistente.** Todo lo que le contás queda guardado como embeddings vectoriales en Qdrant. Si hace semanas mencionaste un problema y hoy decís "estoy estresado", recupera el contexto sin que se lo recuerdes.
-3. **Proactividad aleatoria inteligente.** No envía mensajes cada N horas. Elige momentos aleatorios dentro de una ventana diaria (9:00 a 21:00), revisa la memoria reciente y solo escribe si detecta una acción pendiente, una contradicción o un patrón de evasión. Si no hay nada útil que decir, responde internamente `SILENCIO` y no molesta.
-4. **Recordatorios antes de compromisos.** Detecta automáticamente fechas y horas en tus mensajes (entrevistas, citas, plazos) usando el propio LLM como extractor, y programa recordatorios entre 30 y 90 minutos antes del evento. No para desearte suerte: para preguntarte si preparaste lo necesario.
-5. **Voz local.** Recibe audios por Telegram y WhatsApp, los transcribe localmente con Whisper (sin conexión a internet), los guarda en memoria y responde como texto. Los audios se borran inmediatamente después de transcribir.
-6. **Multiplataforma.** Telegram (API oficial, estable, texto y voz) y WhatsApp (vía whatsapp-web.js, no oficial, texto y voz).
-7. **Tres registros de interacción automáticos:**
+2. **Onboarding conversacional.** La primera vez que le escribís, el espejo te entrevista: te hace preguntas directas (en qué trabajás, qué proyectos tenés, qué patrones querés que te señale) y construye tu base de conocimiento a partir de tus respuestas. Cuando tiene el panorama, cierra con un resumen y pasa a modo espejo. Sin formularios ni configuración manual del perfil.
+3. **Memoria semántica persistente.** Todo lo que le contás queda guardado como embeddings vectoriales en Qdrant. Si hace semanas mencionaste un problema y hoy decís "estoy estresado", recupera el contexto sin que se lo recuerdes.
+4. **Proactividad aleatoria inteligente.** No envía mensajes cada N horas. Elige momentos aleatorios dentro de una ventana diaria (9:00 a 21:00), revisa la memoria reciente y solo escribe si detecta una acción pendiente, una contradicción o un patrón de evasión. Si no hay nada útil que decir, responde internamente `SILENCIO` y no molesta.
+5. **Recordatorios antes de compromisos.** Detecta automáticamente fechas y horas en tus mensajes (entrevistas, citas, plazos) usando el propio LLM como extractor, y programa recordatorios entre 30 y 90 minutos antes del evento. No para desearte suerte: para preguntarte si preparaste lo necesario.
+6. **Voz local.** Recibe audios por Telegram y WhatsApp, los transcribe localmente con Whisper (sin conexión a internet), los guarda en memoria y responde como texto. Los audios se borran inmediatamente después de transcribir.
+7. **Multiplataforma.** Telegram (API oficial, estable, texto y voz) y WhatsApp (vía whatsapp-web.js, no oficial, texto y voz).
+8. **Tres registros de interacción automáticos:**
    - **Escucha fría:** cuando reportás una falla real sin excusas, responde con contención mínima: "Entendido. Contame cuando puedas."
    - **Pregunta de apertura:** cuando estás confundido pero no evadiendo: "¿Qué parte de esto te angustia más?"
    - **Pinchazo:** cuando tenés recursos pero evadís un patrón conocido: "Evadiste esto. ¿Por qué?" Señala una sola vez, sin insistir.
@@ -93,7 +94,7 @@ nano .env
 nano system_prompt.md
 ```
 
-**Importante:** el system prompt no está en el código. Vive en `system_prompt.md` (ignorado por git) y tiene dos partes: la personalidad del espejo (dejala como está, es lo que lo hace funcionar) y la sección `MIS PROYECTOS Y CONTEXTO`, que **tenés que editar con tus datos** — si no, el espejo va a razonar con el contexto de ejemplo.
+**Nota:** el system prompt no está en el código. Vive en `system_prompt.md` (ignorado por git) y define la personalidad del espejo — dejala como está. El contexto personal (proyectos, compromisos) **ya no hace falta cargarlo a mano**: el espejo lo construye solo en la entrevista inicial del primer mensaje. Si preferís precargar contexto, podés editar la sección `MIS PROYECTOS Y CONTEXTO` del archivo.
 
 Variables disponibles:
 
