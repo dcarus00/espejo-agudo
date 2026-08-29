@@ -9,6 +9,16 @@ set -e
 echo "=========================================="
 echo " Espejo Agudo - Instalación"
 echo "=========================================="
+echo ""
+echo " ANTES DE EMPEZAR:"
+echo " Vas a necesitar un TELEGRAM_TOKEN para configurar el bot."
+echo " Si todavía no lo tenés, crealo ahora con @BotFather en"
+echo " Telegram (comando /newbot) y guardalo: te lo va a pedir"
+echo " al final de la instalación, al configurar el archivo .env."
+echo ""
+echo " La instalación puede continuar sin el token; solo lo"
+echo " necesitás antes de arrancar."
+echo ""
 
 # --- 1. Dependencias del sistema ---
 echo "[1/6] Actualizando paquetes e instalando dependencias del sistema..."
@@ -27,11 +37,27 @@ else
 fi
 
 # Asegurar que el servidor de Ollama esté corriendo para poder descargar el modelo.
-if ! curl -fsS http://localhost:11434/api/tags >/dev/null 2>&1; then
+if curl -fsS http://localhost:11434/api/tags >/dev/null 2>&1; then
+  echo "      El servidor de Ollama ya está corriendo."
+elif pgrep -x ollama >/dev/null 2>&1; then
+  echo "      Hay un proceso de Ollama activo pero no responde todavía; esperando..."
+else
   echo "      Iniciando servidor de Ollama en segundo plano..."
   ollama serve >/dev/null 2>&1 &
-  sleep 5
 fi
+
+# Esperar a que Ollama responda (hasta 60 segundos).
+espera=0
+until curl -fsS http://localhost:11434/api/tags >/dev/null 2>&1; do
+  sleep 3
+  espera=$((espera + 3))
+  if [ "$espera" -ge 60 ]; then
+    echo "      ERROR: Ollama no responde después de 60 segundos."
+    echo "      Verificá manualmente con: ollama serve"
+    exit 1
+  fi
+done
+echo "      Ollama respondiendo correctamente."
 
 echo "      Descargando modelo qwen2.5:14b (esto puede tardar bastante)..."
 ollama pull qwen2.5:14b
@@ -39,7 +65,30 @@ echo "      Modelo descargado."
 
 # --- 3. Qdrant (Docker) ---
 echo "[3/6] Levantando Qdrant con Docker Compose..."
-docker compose up -d || docker-compose up -d
+
+# Verificar permisos de Docker antes de intentar levantar el contenedor.
+if docker ps >/dev/null 2>&1; then
+  DOCKER="docker"
+elif sudo docker ps >/dev/null 2>&1; then
+  DOCKER="sudo docker"
+  echo "      (usando sudo para Docker; ver nota al final para evitarlo)"
+else
+  echo "      ERROR: no se pudo acceder al daemon de Docker ni con sudo."
+  echo "      Verificá que Docker esté instalado y corriendo:"
+  echo "        sudo systemctl status docker"
+  exit 1
+fi
+
+if $DOCKER compose version >/dev/null 2>&1; then
+  $DOCKER compose up -d
+else
+  # Fallback a docker-compose (guion) en instalaciones viejas.
+  if [ "$DOCKER" = "docker" ]; then
+    docker-compose up -d
+  else
+    sudo docker-compose up -d
+  fi
+fi
 echo "      Qdrant corriendo en el puerto 6333."
 
 # --- 4. Entorno virtual de Python ---
@@ -66,9 +115,10 @@ echo ""
 echo "=========================================="
 echo " Próximos pasos:"
 echo "=========================================="
-echo " 1. Copiá el archivo de configuración y completalo:"
+echo " 1. Copiá los archivos de configuración y completalos:"
 echo "      cp .env.example .env"
-echo "      nano .env   # al menos TELEGRAM_TOKEN"
+echo "      cp system_prompt.example.md system_prompt.md"
+echo "      nano .env   # al menos TELEGRAM_TOKEN (de @BotFather)"
 echo ""
 echo " 2. Iniciá el núcleo (Telegram + API + scheduler):"
 echo "      ./start.sh"
@@ -80,4 +130,4 @@ echo "    (WhatsApp > Dispositivos vinculados)."
 echo ""
 echo " Nota: si tu usuario no está en el grupo docker, ejecutá:"
 echo "      sudo usermod -aG docker \$USER"
-echo "    y volvé a iniciar sesión."
+echo "    y volvé a iniciar sesión para no necesitar sudo."
