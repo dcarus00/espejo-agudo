@@ -88,14 +88,19 @@ chmod +x install.sh start.sh
 
 ```bash
 cp .env.example .env
+cp system_prompt.example.md system_prompt.md
 nano .env
+nano system_prompt.md
 ```
+
+**Importante:** el system prompt no está en el código. Vive en `system_prompt.md` (ignorado por git) y tiene dos partes: la personalidad del espejo (dejala como está, es lo que lo hace funcionar) y la sección `MIS PROYECTOS Y CONTEXTO`, que **tenés que editar con tus datos** — si no, el espejo va a razonar con el contexto de ejemplo.
 
 Variables disponibles:
 
 | Variable | Descripción | Default |
 |---|---|---|
 | `TELEGRAM_TOKEN` | Token del bot de Telegram (@BotFather) | — (requerida) |
+| `SYSTEM_PROMPT_FILE` | Archivo del system prompt | `system_prompt.md` |
 | `OLLAMA_URL` | Endpoint de la API de Ollama | `http://localhost:11434/api/generate` |
 | `OLLAMA_MODEL` | Modelo de Ollama | `qwen2.5:14b` |
 | `QDRANT_HOST` | Host de Qdrant | `localhost` |

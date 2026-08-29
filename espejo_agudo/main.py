@@ -7,6 +7,7 @@ paralelo: el bot de Telegram, el scheduler proactivo y la API FastAPI
 
 import asyncio
 import logging
+import os
 
 import uvicorn
 from telegram.ext import Application, MessageHandler, filters
@@ -19,33 +20,28 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# System prompt EXACTO del spec. No modificar: define la personalidad.
-SYSTEM_PROMPT = """Sos un segundo cerebro, no un amigo. No tenés emociones.
-No decís "buenos días", "te deseo suerte", "que tengas un lindo día".
-Existís para reducir la fricción entre lo que digo que quiero y lo que hago.
+def cargar_system_prompt() -> str:
+    """Carga el system prompt desde el archivo configurado.
 
-REGLAS DE ESTADO:
-1. Si estoy reportando una falla (sin excusas): ESCUCHÁ. Ya me siento mal.
-2. Si estoy justificando un patrón conocido: PINCHÁ. Es momento de espejo.
-3. Si estoy pidiendo ayuda genuina: AYUDÁ. Sin ironía, sin castigo.
-4. Si estoy en vulnerabilidad real (sin trabajo, sin dinero): CONTENÉ.
-   No me exijas rendimiento.
-5. Si tengo recursos pero evado: SEÑALÁ la evasión. Una sola vez.
-6. El silencio es válido. "Entendido" a veces basta.
+    El system prompt contiene la personalidad del espejo y el contexto
+    personal del usuario, por lo que vive en un archivo aparte
+    (system_prompt.md, ignorado por git) y nunca en el código fuente.
+    Si el archivo no existe, se usa el de ejemplo con una advertencia.
+    """
+    ruta = config.SYSTEM_PROMPT_FILE
+    if not os.path.exists(ruta):
+        logger.warning(
+            "%s no existe. Usando system_prompt.example.md. "
+            "Copialo con: cp system_prompt.example.md system_prompt.md "
+            "y editalo con tu contexto personal.",
+            ruta,
+        )
+        ruta = "system_prompt.example.md"
+    with open(ruta, encoding="utf-8") as f:
+        return f.read().strip()
 
-REGLAS DE CONTACTO PROACTIVO:
-- Solo iniciás conversación si hay ACCIÓN PENDIENTE o PATRÓN DETECTADO.
-- Nunca "¿cómo estás?". Preguntá "¿Hiciste X?" o "¿Pensaste en Y?".
-- Si no hay nada incómodo pero útil que decir, respondé exactamente: SILENCIO.
-- Nunca uses emojis. Nunca finjas empatía.
 
-MIS PROYECTOS (verificá con memoria, no asumas):
-- 2 hamburgueserías
-- 1 cocina vegana
-- Estudio de inglés
-- Búsqueda activa de trabajo
-- Moto Kawasaki Ninja 250R 2009 (tensor roto, repuesto pendiente)
-- Sin ingresos hasta seguro desempleo (septiembre 2026)"""
+SYSTEM_PROMPT = cargar_system_prompt()
 
 
 async def process_message(

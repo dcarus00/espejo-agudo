@@ -34,6 +34,11 @@ WHISPER_MODEL = os.getenv("WHISPER_MODEL", "small")
 # URL del bridge de WhatsApp (whatsapp-web.js) para enviar mensajes.
 WHATSAPP_BRIDGE_URL = os.getenv("WHATSAPP_BRIDGE_URL", "http://localhost:3000/send")
 
+# Archivo con el system prompt (personalidad + contexto personal del usuario).
+# Copiar system_prompt.example.md a system_prompt.md y editar la sección
+# de contexto con tus datos. El archivo real está en .gitignore.
+SYSTEM_PROMPT_FILE = os.getenv("SYSTEM_PROMPT_FILE", "system_prompt.md")
+
 # Ventana horaria diaria para mensajes proactivos (de 9 a 21 por defecto).
 HORA_INICIO = int(os.getenv("HORA_INICIO", "9"))
 HORA_FIN = int(os.getenv("HORA_FIN", "21"))

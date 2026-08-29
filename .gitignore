@@ -5,6 +5,7 @@ venv/
 
 # Config y secretos
 .env
+system_prompt.md
 
 # Datos y sesiones
 qdrant_storage/
