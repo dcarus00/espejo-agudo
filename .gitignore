@@ -1,0 +1,10 @@
+.env
+venv/
+__pycache__/
+*.pyc
+node_modules/
+session/
+qdrant_storage/
+last-qr.txt
+*.ogg
+*.log

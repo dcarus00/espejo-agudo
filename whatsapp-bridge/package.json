@@ -1,0 +1,18 @@
+{
+  "name": "espejo-agudo-whatsapp-bridge",
+  "version": "1.0.0",
+  "description": "Bridge de WhatsApp (whatsapp-web.js) para Espejo Agudo",
+  "main": "index.js",
+  "private": true,
+  "scripts": {
+    "start": "node index.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "qrcode-terminal": "^0.12.0",
+    "whatsapp-web.js": "^1.26.0"
+  }
+}
