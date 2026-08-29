@@ -4,6 +4,22 @@ Un segundo cerebro digital 100% local y autohospedado. No busca agradarte: busca
 
 Corre enteramente en tu máquina (Debian/Linux): el razonamiento, la memoria y la transcripción de voz son locales. Las únicas conexiones externas son Telegram y WhatsApp, usados exclusivamente como canal de mensajería.
 
+## Requisitos del sistema
+
+**Sistema operativo**
+- Debian 12+ (o cualquier Linux con systemd: Ubuntu 22.04+, etc.)
+
+**Hardware**
+- CPU: 4 núcleos mínimo (no requiere GPU; todo corre en CPU, incluido Whisper en int8)
+- RAM: 8 GB mínimo, 16 GB recomendados (el modelo Qwen 2.5 14B ocupa ~9 GB en RAM)
+- Almacenamiento: ~15 GB libres (modelo LLM ~9 GB + Whisper ~1-2 GB + dependencias)
+
+**Software** (lo instala `install.sh` automáticamente)
+- Docker y Docker Compose
+- Python 3.10+ y pip
+- Node.js 18+ y npm (solo si usás WhatsApp)
+- ffmpeg (para Whisper)
+
 ## Características distintivas
 
 1. **No es un amigo, es un segundo cerebro.** Sin saludos, sin emojis, sin adulación. Responde con la verdad incómoda cuando hace falta.
@@ -50,16 +66,6 @@ Corre enteramente en tu máquina (Debian/Linux): el razonamiento, la memoria y l
 - **sentence-transformers** (all-MiniLM-L6-v2) — embeddings (384 dimensiones)
 - **faster-whisper** (small/medium, CPU, int8) — transcripción de voz local
 - **python-dotenv** — configuración por variables de entorno
-
-## Requisitos del sistema
-
-- Debian 12+ (o cualquier Linux con systemd)
-- RAM: 8 GB mínimo, 16 GB recomendados
-- Almacenamiento: ~15 GB libres
-- Docker y Docker Compose
-- Python 3.10+ y pip
-- Node.js 18+ y npm (solo para WhatsApp)
-- ffmpeg (para Whisper)
 
 ## Instalación
 
