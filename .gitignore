@@ -1,3 +1,18 @@
+# Python
 __pycache__/
 *.pyc
+venv/
+
+# Config y secretos
 .env
+
+# Datos y sesiones
+qdrant_storage/
+session/
+*.ogg
+*.log
+
+# Node
+node_modules/
+whatsapp-bridge/last-qr.txt
+last-qr.txt
